@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Entry</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+    <form action="/order/add" method="POST">
+        <div class="row">
+            <div class="col-md-7">
+                    <div class="form-group">
+                        <label for="orderType">Order Type:</label>
+                        <select class="form-control" id="orderType" name="orderType">
+                            <option value="">Please Select One</option>
+                            <option value="takeaway">Takeaway</option>
+                            <option value="dine-in">Dine-in</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerName">Customer Name:</label>
+                        <input type="text" class="form-control" id="customerName" name="customerName" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tableNumber">Table Number:</label>
+                        <input type="text" class="form-control" id="tableNum" name="tableNum" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="menuItems">Menu Items:</label>
+                        <select class="form-control" id="menuItems" name="menuItems" multiple disabled>
+                            <option value="item1-7.99">Item 1 - RM 7.99</option>
+                            <option value="item2-10.99">Item 2 - RM 10.99</option>
+                            <option value="item3-3.99">Item 3 - RM 3.99</option>
+                            <option value="item4-12.99">Item 4 - RM 12.99</option>
+                            <option value="item5-19.99">Item 5 - RM 19.99</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerRequest">Request:</label>
+                        <input type="text" class="form-control" id="customerRequest" name="customerRequest" disabled>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="addToOrderSummary()">Add to Order</button>
+
+                    <button type="button" class="btn btn-secondary ml-2" onclick="clearForm()">Clear Input</button>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Order Summary</h5>
+                        <ul id="orderSummary" class="list-group">
+                            <input type="hidden" name="orderList" id="orderListInput">
+                        </ul>
+                        <div class="mt-3 text-right">
+                            <h2 class="card-text font-semibold inline-block">Total Order Price: RM</h2>
+                            <input class="border rounded-md w-20 text-right" type="text" id="orderPrice" name="orderPrice" disabled>
+                        </div>
+                        <div class="text-right mt-3">
+                            <button type="button" class="btn btn-danger" onclick="clearOrderSummary()">Clear Summary</button>
+                            <button type="submit" class="btn btn-success ml-2">Place Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+
+    const orderList = [];
+    let totalOrderPrice = 0;
+
+    function clearForm() {
+        document.getElementById("menuItems").value = "";
+        document.getElementById("quantity").value = "1";
+        document.getElementById("tableNumber").value = "";
+        document.getElementById("customerName").value = "";
+        document.getElementById("orderType").value = "takeaway";
+    }
+
+    function clearOrderSummary() {
+        document.getElementById("orderSummary").innerHTML = "";
+    }
+
+    function placeOrder() {
+        alert("Order Placed!");
+        clearForm();
+        clearOrderSummary();
+    }
+
+    // Function to add item to order summary
+    function addToOrderSummary() {
+        var menuItem = document.getElementById("menuItems");
+
+        var quantity = document.getElementById("quantity");
+        var customerRequest = document.getElementById("customerRequest");
+
+        // Create a new list item
+        var listItem = document.createElement("li");
+        listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+
+        var buttonDiv = document.createElement("div")
+        buttonDiv.className = "order-summary-button"
+
+        // Create a class for the item text
+        var itemTextClass = "order-item-text";
+        listItem.innerHTML = `<span class="${itemTextClass}">${menuItem.options[menuItem.selectedIndex].text} (Qty: ${quantity.value})</span>`;
+
+        // Append "Remove" button
+        var removeButton = document.createElement("button");
+        removeButton.className = "btn btn-danger btn-sm m-1";
+        removeButton.textContent = "Remove";
+        removeButton.onclick = function () {
+            listItem.remove();
+        };
+
+        const selectedItem = menuItem.value.split("-");
+        const itemName = selectedItem[0];
+        const itemPrice = Number(selectedItem[1]);
+        const itemQuantity = Number(quantity.value);
+        const totalPrice = itemPrice * itemQuantity;
+        totalOrderPrice = Number((totalOrderPrice + totalPrice).toFixed(2));
+
+        var totalItemPrice = document.createElement("h3");
+        totalItemPrice.className = "btn m-0.1";
+        totalItemPrice.textContent = totalPrice;
+
+        // Append the new item to the order summary
+        buttonDiv.appendChild(totalItemPrice);
+        buttonDiv.appendChild(removeButton);
+        listItem.appendChild(buttonDiv);
+        document.getElementById("orderSummary").appendChild(listItem);
+
+        // Calculate and display order price
+        var orderPrice = document.getElementById("orderPrice");
+        orderPrice.value = totalOrderPrice;
+
+        var orderItem = { itemName, quantity: itemQuantity, itemPrice, customerRequest: customerRequest.value };
+        orderList.push(orderItem);
+
+        document.getElementById("orderListInput").value = JSON.stringify(orderList);
+        console.log(document.getElementById("orderListInput").value);
+
+        console.log("Order List:", orderList.map(item => ({ itemName: item.menuItem, quantity: item.quantity, customerRequest: customerRequest.value })));
+
+    }
+
+    // Function to handle order type change
+    function handleOrderTypeChange() {
+        var orderType = document.getElementById("orderType");
+        var tableNumInput = document.getElementById("tableNum");
+        var customerNameInput = document.getElementById("customerName");
+        var menuItemsInput = document.getElementById("menuItems");
+        var quantityInput = document.getElementById("quantity");
+        var customerRequestInput = document.getElementById("customerRequest");
+
+        // Check the selected order type and enable/disable fields accordingly
+        if (orderType.value === "dine-in") {
+            tableNumInput.disabled = false;
+            customerNameInput.disabled = true;
+            menuItemsInput.disabled = false;
+            quantityInput.disabled = false;
+            customerRequestInput.disabled = false;
+        }
+        else if(orderType.value === "takeaway"){
+            tableNumInput.disabled = true;
+            customerNameInput.disabled = false;
+            menuItemsInput.disabled = false;
+            quantityInput.disabled = false;
+            customerRequestInput.disabled = false;
+        }
+        else{
+            tableNumInput.disabled = true;
+            customerNameInput.disabled = true;
+            menuItemsInput.disabled = true;
+            quantityInput.disabled = true;
+            customerRequestInput.disabled = true;
+        }
+    }
+
+    // Attach the handleOrderTypeChange function to the order type dropdown change event
+    document.getElementById("orderType").addEventListener("change", handleOrderTypeChange);
+    document.querySelector("form").addEventListener("submit", function (event) {
+        document.getElementById("orderPrice").disabled = false;
+    });
+</script>
+
+</body>
+</html>
